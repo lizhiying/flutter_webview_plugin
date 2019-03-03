@@ -77,10 +77,16 @@ class WebviewManager {
     ResultHandler resultHandler;
 
     WebviewManager(final Activity activity) {
+
         this.webView = new ObservableWebView(activity);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.webView.getSettings().setSafeBrowsingEnabled(false);
+        }
+
         this.activity = activity;
         this.resultHandler = new ResultHandler();
-        WebViewClient webViewClient = new BrowserClient();
+        WebViewClient webViewClient = new BrowserClient(activity);
         webView.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {

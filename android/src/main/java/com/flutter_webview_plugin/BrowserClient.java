@@ -1,5 +1,7 @@
 package com.flutter_webview_plugin;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -14,8 +16,13 @@ import java.util.Map;
  */
 
 public class BrowserClient extends WebViewClient {
-    public BrowserClient() {
+
+    private Context mContext;
+    private Dialog progressDialog;
+
+    public BrowserClient(Context ctx) {
         super();
+        mContext = ctx;
     }
 
     @Override
@@ -25,6 +32,7 @@ public class BrowserClient extends WebViewClient {
         data.put("url", url);
         data.put("type", "startLoad");
         FlutterWebviewPlugin.channel.invokeMethod("onState", data);
+        showProgress("loading...");
     }
 
     @Override
@@ -38,6 +46,8 @@ public class BrowserClient extends WebViewClient {
         data.put("type", "finishLoad");
         FlutterWebviewPlugin.channel.invokeMethod("onState", data);
 
+        removeProgress();
+
     }
 
     @Override
@@ -48,4 +58,30 @@ public class BrowserClient extends WebViewClient {
         data.put("code", Integer.toString(errorResponse.getStatusCode()));
         FlutterWebviewPlugin.channel.invokeMethod("onHttpError", data);
     }
+
+    public void showProgress(String message) {
+        if (progressDialog == null) {
+            progressDialog = CustomProgressDialog.create(mContext, message);
+            progressDialog.setCancelable(true);
+            progressDialog.setCanceledOnTouchOutside(true);
+            progressDialog.show();
+        }
+//        if (progressDialog.isShowing()) {
+//            progressDialog.setMessage(message);
+//        } else {
+//            progressDialog.setMessage(message);
+//            progressDialog.show();
+//        }
+    }
+
+    public void removeProgress() {
+        if (progressDialog == null) {
+            return;
+        }
+        if (progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+
+    }
+
 }
