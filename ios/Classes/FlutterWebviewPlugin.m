@@ -7,6 +7,9 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
     BOOL _enableAppScheme;
     BOOL _enableZoom;
 }
+
+@property (nonatomic, retain) CALayer *progresslayer;
+
 @end
 
 @implementation FlutterWebviewPlugin
@@ -114,8 +117,42 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
     _enableZoom = [withZoom boolValue];
 
     [self.viewController.view addSubview:self.webview];
+    
+    CGFloat navigationH = self.viewController.navigationController.navigationBar.frame.size.height;
+    CGFloat statusBarH = [[UIApplication sharedApplication] statusBarFrame].size.height;
+    [self.webview addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+    UIView *progress = [[UIView alloc]initWithFrame:CGRectMake(0, navigationH+statusBarH, CGRectGetWidth(self.viewController.view.frame), 3)];
+    progress.backgroundColor = [UIColor clearColor];
+    [self.viewController.view addSubview:progress];
+    
+    CALayer *layer = [CALayer layer];
+    layer.frame = CGRectMake(0, 0, 0, 3);
+    layer.backgroundColor = [[UIColor blueColor] CGColor];
+    [progress.layer addSublayer:layer];
+    self.progresslayer = layer;
 
     [self navigate:call];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context{
+    if ([keyPath isEqualToString:@"estimatedProgress"]) {
+        self.progresslayer.opacity = 1;
+        //不要让进度条倒着走...有时候goback会出现这种情况
+        if ([change[@"new"] floatValue] < [change[@"old"] floatValue]) {
+            return;
+        }
+        self.progresslayer.frame = CGRectMake(0, 0, self.viewController.view.bounds.size.width * [change[@"new"] floatValue], 3);
+        if ([change[@"new"] floatValue] == 1) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                self.progresslayer.opacity = 0;
+            });
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                self.progresslayer.frame = CGRectMake(0, 0, 0, 3);
+            });
+        }
+    }else{
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 - (CGRect)parseRect:(NSDictionary *)rect {
@@ -184,6 +221,8 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
         [self.webview removeFromSuperview];
         self.webview.navigationDelegate = nil;
         self.webview = nil;
+        
+        [self.webview removeObserver:self forKeyPath:@"estimatedProgress"];
 
         // manually trigger onDestroy
         [channel invokeMethod:@"onDestroy" arguments:nil];
