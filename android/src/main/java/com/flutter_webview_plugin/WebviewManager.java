@@ -15,7 +15,10 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +27,9 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 import static android.app.Activity.RESULT_OK;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static android.view.ViewGroup.LayoutParams.FILL_PARENT;
 
 /**
  * Created by lejard_h on 20/12/2017.
@@ -75,10 +81,18 @@ class WebviewManager {
     WebView webView;
     Activity activity;
     ResultHandler resultHandler;
+    ProgressBar progressbar;
 
     WebviewManager(final Activity activity) {
 
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.FILL_PARENT, 5, 0);
+
+        progressbar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
+        progressbar.setLayoutParams(lp);
+
         this.webView = new ObservableWebView(activity);
+        ((ObservableWebView)this.webView).setProgressBar(progressbar);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             this.webView.getSettings().setSafeBrowsingEnabled(false);
@@ -152,6 +166,21 @@ class WebviewManager {
                 i.setType("image/*");
                 activity.startActivityForResult( Intent.createChooser( i, "File Chooser" ), FILECHOOSER_RESULTCODE );
 
+            }
+
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                super.onProgressChanged(view, newProgress);
+
+                Log.d("onProgressChanged", "webview onProgressChanged: " + newProgress);
+                if (newProgress == 100) {
+                    progressbar.setVisibility(GONE);
+                } else {
+                    if (progressbar.getVisibility() == GONE)
+                        progressbar.setVisibility(VISIBLE);
+                    progressbar.setProgress(newProgress);
+                }
+                super.onProgressChanged(view, newProgress);
             }
 
             //For Android 5.0+
@@ -336,7 +365,7 @@ class WebviewManager {
     }
     void show(MethodCall call, MethodChannel.Result result) {
         if (webView != null) {
-            webView.setVisibility(View.VISIBLE);
+            webView.setVisibility(VISIBLE);
         }
     }
 
