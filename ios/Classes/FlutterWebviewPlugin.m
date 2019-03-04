@@ -3,7 +3,7 @@
 static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
 // UIWebViewDelegate
-@interface FlutterWebviewPlugin() <WKNavigationDelegate, UIScrollViewDelegate> {
+@interface FlutterWebviewPlugin() <WKNavigationDelegate, UIScrollViewDelegate, WKUIDelegate> {
     BOOL _enableAppScheme;
     BOOL _enableZoom;
 }
@@ -110,6 +110,7 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
     self.webview = [[WKWebView alloc] initWithFrame:rc];
     self.webview.navigationDelegate = self;
     self.webview.scrollView.delegate = self;
+    self.webview.UIDelegate = self;
     self.webview.hidden = [hidden boolValue];
     self.webview.scrollView.showsHorizontalScrollIndicator = [scrollBar boolValue];
     self.webview.scrollView.showsVerticalScrollIndicator = [scrollBar boolValue];
@@ -118,7 +119,7 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
     [self.viewController.view addSubview:self.webview];
     
-    CGFloat navigationH = self.viewController.navigationController.navigationBar.frame.size.height;
+    CGFloat navigationH = 44.0;
     CGFloat statusBarH = [[UIApplication sharedApplication] statusBarFrame].size.height;
     [self.webview addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
     UIView *progress = [[UIView alloc]initWithFrame:CGRectMake(0, navigationH+statusBarH, CGRectGetWidth(self.viewController.view.frame), 3)];
@@ -273,6 +274,15 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
         }];
 }
 
+- (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures {
+    if (!navigationAction.targetFrame.isMainFrame) {
+        
+        [webView loadRequest:navigationAction.request];
+    }
+    
+    return nil;
+}
+
 #pragma mark -- WkWebView Delegate
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
     decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
@@ -298,7 +308,6 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
         decisionHandler(WKNavigationActionPolicyCancel);
     }
 }
-
 
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
     [channel invokeMethod:@"onState" arguments:@{@"type": @"startLoad", @"url": webView.URL.absoluteString}];
