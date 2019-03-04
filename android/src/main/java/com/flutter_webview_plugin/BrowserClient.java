@@ -25,14 +25,28 @@ public class BrowserClient extends WebViewClient {
         mContext = ctx;
     }
 
+    private int running = 0; // Could be public if you want a timer to check.
+
+//    @Override
+//    public boolean shouldOverrideUrlLoading(WebView webView, String urlNewString) {
+//        running++;
+//        webView.loadUrl(urlNewString);
+//
+//        showProgress("loading...");
+//        return true;
+//    }
+
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
+
+        running = Math.max(running, 1); // First request move it to 1.
+
         Map<String, Object> data = new HashMap<>();
         data.put("url", url);
         data.put("type", "startLoad");
         FlutterWebviewPlugin.channel.invokeMethod("onState", data);
-        showProgress("loading...");
+//        showProgress("loading...");
     }
 
     @Override
@@ -46,7 +60,9 @@ public class BrowserClient extends WebViewClient {
         data.put("type", "finishLoad");
         FlutterWebviewPlugin.channel.invokeMethod("onState", data);
 
-        removeProgress();
+//        if(--running == 0) { // just "running--;" if you add a timer.
+//            removeProgress();
+//        }
 
     }
 
@@ -59,29 +75,27 @@ public class BrowserClient extends WebViewClient {
         FlutterWebviewPlugin.channel.invokeMethod("onHttpError", data);
     }
 
-    public void showProgress(String message) {
-        if (progressDialog == null) {
-            progressDialog = CustomProgressDialog.create(mContext, message);
-            progressDialog.setCancelable(true);
-            progressDialog.setCanceledOnTouchOutside(true);
-            progressDialog.show();
-        }
-//        if (progressDialog.isShowing()) {
-//            progressDialog.setMessage(message);
-//        } else {
-//            progressDialog.setMessage(message);
+//    public void showProgress(String message) {
+//        if (progressDialog == null) {
+//            progressDialog = CustomProgressDialog.create(mContext, message);
+//            progressDialog.setCancelable(true);
+//            progressDialog.setCanceledOnTouchOutside(true);
 //            progressDialog.show();
 //        }
-    }
-
-    public void removeProgress() {
-        if (progressDialog == null) {
-            return;
-        }
-        if (progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
-
-    }
+//
+//        if (!progressDialog.isShowing()) {
+//            progressDialog.show();
+//        }
+//    }
+//
+//    public void removeProgress() {
+//        if (progressDialog == null) {
+//            return;
+//        }
+//        if (progressDialog.isShowing()) {
+//            progressDialog.dismiss();
+//        }
+//
+//    }
 
 }

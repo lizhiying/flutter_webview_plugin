@@ -3,9 +3,17 @@ package com.flutter_webview_plugin;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.webkit.WebView;
+import android.widget.ProgressBar;
 
 public class ObservableWebView extends WebView {
+    protected ProgressBar progressBar;
+
     private OnScrollChangedCallback mOnScrollChangedCallback;
+
+    public void setProgressBar(ProgressBar progressBar){
+        this.progressBar = progressBar;
+        addView(progressBar);
+    }
 
     public ObservableWebView(final Context context)
     {

@@ -32,6 +32,7 @@ public class CustomProgressDialog {
         Dialog loadingDialog = new Dialog(context, R.style.loading_dialog);
 
         loadingDialog.setCancelable(true);
+        loadingDialog.getWindow().setDimAmount(0f);
         loadingDialog.setCanceledOnTouchOutside(true);
         loadingDialog.setContentView(layout, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
