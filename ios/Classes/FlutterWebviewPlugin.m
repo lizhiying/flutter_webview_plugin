@@ -9,6 +9,7 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 }
 
 @property (nonatomic, retain) CALayer *progresslayer;
+@property (nonatomic, retain) UIView *progress;
 
 @end
 
@@ -119,12 +120,13 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
     [self.viewController.view addSubview:self.webview];
     
-    CGFloat navigationH = 44.0;
+    CGFloat navigationH = 54.0;
     CGFloat statusBarH = [[UIApplication sharedApplication] statusBarFrame].size.height;
     [self.webview addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
     UIView *progress = [[UIView alloc]initWithFrame:CGRectMake(0, navigationH+statusBarH, CGRectGetWidth(self.viewController.view.frame), 3)];
     progress.backgroundColor = [UIColor clearColor];
     [self.viewController.view addSubview:progress];
+    self.progress = progress;
     
     CALayer *layer = [CALayer layer];
     layer.frame = CGRectMake(0, 0, 0, 3);
@@ -219,12 +221,12 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 - (void)closeWebView {
     if (self.webview != nil) {
         [self.webview stopLoading];
+        [self.webview removeObserver:self forKeyPath:@"estimatedProgress"];
+        [self.progress removeFromSuperview];
         [self.webview removeFromSuperview];
         self.webview.navigationDelegate = nil;
+        self.webview.UIDelegate = nil;
         self.webview = nil;
-        
-        [self.webview removeObserver:self forKeyPath:@"estimatedProgress"];
-
         // manually trigger onDestroy
         [channel invokeMethod:@"onDestroy" arguments:nil];
     }
