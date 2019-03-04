@@ -127,7 +127,7 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
     
     CALayer *layer = [CALayer layer];
     layer.frame = CGRectMake(0, 0, 0, 3);
-    layer.backgroundColor = [[UIColor blueColor] CGColor];
+    layer.backgroundColor = [[UIColor orangeColor] CGColor];
     [progress.layer addSublayer:layer];
     self.progresslayer = layer;
 
